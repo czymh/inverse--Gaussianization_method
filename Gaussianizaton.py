@@ -92,5 +92,4 @@ def Gaussianization(Kappa,k,y):
     Y0_re = k_y_relation(K0_re)
     Y = Y0_re.reshape(i_fs,size_x,size_y)
     return Y
-    
  
