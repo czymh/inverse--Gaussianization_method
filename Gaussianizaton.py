@@ -9,7 +9,6 @@ The Gaussianization process:
     
 """
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.special as scisp
 import scipy.interpolate as scintp
 
@@ -21,7 +20,7 @@ def kappa_y_relation(Kappa):
     
     Parameters
     ----------
-    Kappa : TYPE: kappa fields of (i_f,size_x,size_y) -- array 
+    Kappa : TYPE: kappa fields of (i_f,size_x,size_y) -- 2D or 3D array 
             i_f is the number of fields
         the weak lensing convergence fields
 
@@ -36,17 +35,17 @@ def kappa_y_relation(Kappa):
     # get the dimension of kappa fields
     if len(Kappa.shape) == 3:
         i_fs,size_x,size_y = Kappa.shape
-    elif len(Kappa.shape) == 2:
-        size_x,size_y = Kappa.shape
-        i_fs = 1
+    elif len(Kappa.shape) == 2:    
+        Kappa = Kappa.reshape(1,*Kappa.shape)
+        i_fs,size_x,size_y = Kappa.shape
         
     
-    K_re_mean = np.zeros((size_x*size_y,1))
+    K_re_mean = np.zeros((size_x*size_y,))
     for i_f in range(i_fs):
-        K_re_sorted = np.sort(np.reshape(Kappa[i_f,:,:],(-1,1)),axis=0)
+        K_re_sorted = np.squeeze(np.sort(np.reshape(Kappa[i_f,:,:],(-1,1)),axis=0))
         K_re_mean += K_re_sorted
     ## the x axis of mean CDF of kappa; the y axis is from 0 to 1.
-    K_re_mean = K_re_mean/96
+    K_re_mean = K_re_mean/i_fs
     
     ## y = erfinv(2CDF(kappa) − 1).
     x = np.linspace(0.5/size_x/size_y,1-0.5/size_x/size_y,size_x*size_y,endpoint=True)
@@ -61,7 +60,7 @@ def Gaussianization(Kappa,k,y):
 
     Parameters
     ----------
-    Kappa : TYPE: kappa fields of (i_f,size_x,size_y) -- array 
+    Kappa : TYPE: kappa fields of (i_fs,size_x,size_y) -- array 
             i_f is the number of fields
         the weak lensing convergence fields
     k : TYPE: (size_x*size_y,1) array 
@@ -71,7 +70,7 @@ def Gaussianization(Kappa,k,y):
 
     Returns
     -------
-    Y : TYPE: the Gaussianized y fields of (i_f,size_x,size_y) -- array
+    Y : TYPE: the Gaussianized y fields of (i_fs,size_x,size_y) -- array
         the Gaussianized fileds 
 
     '''
@@ -79,36 +78,19 @@ def Gaussianization(Kappa,k,y):
     if len(Kappa.shape) == 3:
         i_fs,size_x,size_y = Kappa.shape
     elif len(Kappa.shape) == 2:
-        size_x,size_y = Kappa.shape
-        i_fs = 1
+        Kappa = Kappa.reshape(1,*Kappa.shape)
+        i_fs,size_x,size_y = Kappa.shape
     
     ## interpolate function: kappa-y relation
-    k_y_relation = scintp.interp1d(y,k,kind='linear')
+    k_y_relation = scintp.interp1d(k,y,kind='linear')
 
     K0_re = np.reshape(Kappa,(-1,1))
     ## deal with the boundary point in the interpolation process
-    K0_re[np.where(K0_re>K0_re.max())] = K0_re.max()
-    K0_re[np.where(K0_re<K0_re.min())] = K0_re.min()
+    K0_re[np.where(K0_re>k.max())] = k.max()
+    K0_re[np.where(K0_re<k.min())] = k.min()
     
     Y0_re = k_y_relation(K0_re)
     Y = Y0_re.reshape(i_fs,size_x,size_y)
     return Y
-        
     
-    
-    
-## test example
-if __name__ == "__main__":
-    ## use the normal distribution to test
-    ## the kappa-y relation should be a stright line in this case
-    K_test = np.random.randn(50,1024,1024)
-    k_test, y_test = kappa_y_relation(K_test)
-    plt.plot(k_test,y_test,'b-',lw=1.5,label=r'$\kappa$-y relation')
-    plt.xlabel(r'$\kappa$')
-    plt.ylabel('y')
-    plt.legend()
-    plt.show()
-
-    
-    
-    
+ 
