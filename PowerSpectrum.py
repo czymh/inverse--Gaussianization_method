@@ -58,7 +58,7 @@ def PowerSpectrum_2D(Kappa):
     for r in range(bins):
             k00[r] = (np.exp(k0[r]))
             ## dimensionalless
-            p00[r] = mapsize*mapsize*((k00[r]*( k00[r] +1 ) )*p0[r])/(2*np.pi)/(1024**4)
+            p00[r] = mapsize*mapsize*((k00[r]*( k00[r] +1 ) )*p0[r])/(2*np.pi)/(L**4)
    
  
            
